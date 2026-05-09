@@ -1,0 +1,1105 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: ParkHub - Parking Management SaaS API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: spots
+    description: Parking spot management
+  - name: sessions
+    description: Parking session management (vehicle entry/exit)
+  - name: subscribers
+    description: Monthly subscriber management
+  - name: plans
+    description: Subscription plan management
+  - name: transactions
+    description: Financial transactions
+  - name: dashboard
+    description: Dashboard summary and analytics
+  - name: reports
+    description: Reports and analytics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /spots:
+    get:
+      operationId: listSpots
+      tags: [spots]
+      summary: List all parking spots
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, occupied, reserved, maintenance]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [standard, handicapped, vip, motorcycle, large]
+      responses:
+        "200":
+          description: List of parking spots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ParkingSpot"
+    post:
+      operationId: createSpot
+      tags: [spots]
+      summary: Create a parking spot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSpotBody"
+      responses:
+        "201":
+          description: Created spot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSpot"
+
+  /spots/{id}:
+    get:
+      operationId: getSpot
+      tags: [spots]
+      summary: Get a spot by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Parking spot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSpot"
+    patch:
+      operationId: updateSpot
+      tags: [spots]
+      summary: Update a parking spot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSpotBody"
+      responses:
+        "200":
+          description: Updated spot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSpot"
+    delete:
+      operationId: deleteSpot
+      tags: [spots]
+      summary: Delete a parking spot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      summary: List parking sessions
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, cancelled]
+        - name: plate
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ParkingSession"
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Register vehicle entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionBody"
+      responses:
+        "201":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSession"
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get session by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Parking session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSession"
+    patch:
+      operationId: updateSession
+      tags: [sessions]
+      summary: Update session (register exit / payment)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSessionBody"
+      responses:
+        "200":
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSession"
+
+  /plans:
+    get:
+      operationId: listPlans
+      tags: [plans]
+      summary: List subscription plans
+      responses:
+        "200":
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plan"
+    post:
+      operationId: createPlan
+      tags: [plans]
+      summary: Create a subscription plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlanBody"
+      responses:
+        "201":
+          description: Created plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plan"
+
+  /plans/{id}:
+    patch:
+      operationId: updatePlan
+      tags: [plans]
+      summary: Update a plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlanBody"
+      responses:
+        "200":
+          description: Updated plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plan"
+    delete:
+      operationId: deletePlan
+      tags: [plans]
+      summary: Delete a plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /subscribers:
+    get:
+      operationId: listSubscribers
+      tags: [subscribers]
+      summary: List monthly subscribers
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, cancelled, pending]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of subscribers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscriber"
+    post:
+      operationId: createSubscriber
+      tags: [subscribers]
+      summary: Create a monthly subscriber
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriberBody"
+      responses:
+        "201":
+          description: Created subscriber
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscriber"
+
+  /subscribers/{id}:
+    get:
+      operationId: getSubscriber
+      tags: [subscribers]
+      summary: Get subscriber by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Subscriber
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscriber"
+    patch:
+      operationId: updateSubscriber
+      tags: [subscribers]
+      summary: Update a subscriber
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubscriberBody"
+      responses:
+        "200":
+          description: Updated subscriber
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscriber"
+    delete:
+      operationId: deleteSubscriber
+      tags: [subscribers]
+      summary: Delete a subscriber
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /transactions:
+    get:
+      operationId: listTransactions
+      tags: [transactions]
+      summary: List financial transactions
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [session, subscription, fine]
+        - name: paymentMethod
+          in: query
+          schema:
+            type: string
+            enum: [cash, credit_card, debit_card, pix, transfer]
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary metrics
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/occupancy:
+    get:
+      operationId: getDashboardOccupancy
+      tags: [dashboard]
+      summary: Get spot occupancy breakdown by type
+      responses:
+        "200":
+          description: Occupancy data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OccupancyBreakdown"
+
+  /dashboard/revenue-trend:
+    get:
+      operationId: getDashboardRevenueTrend
+      tags: [dashboard]
+      summary: Get daily revenue for last 30 days
+      responses:
+        "200":
+          description: Revenue trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenueTrendPoint"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getDashboardRecentActivity
+      tags: [dashboard]
+      summary: Get recent vehicle entries and exits
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /reports/revenue:
+    get:
+      operationId: getRevenueReport
+      tags: [reports]
+      summary: Revenue report grouped by period
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: monthly
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Revenue report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueReport"
+
+  /reports/occupancy:
+    get:
+      operationId: getOccupancyReport
+      tags: [reports]
+      summary: Occupancy rate report
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Occupancy report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OccupancyReport"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ParkingSpot:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        type:
+          type: string
+          enum: [standard, handicapped, vip, motorcycle, large]
+        status:
+          type: string
+          enum: [available, occupied, reserved, maintenance]
+        floor:
+          type: string
+        section:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        currentSessionId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, number, type, status, floor, section, createdAt, updatedAt]
+
+    CreateSpotBody:
+      type: object
+      properties:
+        number:
+          type: string
+        type:
+          type: string
+          enum: [standard, handicapped, vip, motorcycle, large]
+        floor:
+          type: string
+        section:
+          type: string
+        notes:
+          type: string
+      required: [number, type, floor, section]
+
+    UpdateSpotBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [available, occupied, reserved, maintenance]
+        type:
+          type: string
+          enum: [standard, handicapped, vip, motorcycle, large]
+        floor:
+          type: string
+        section:
+          type: string
+        notes:
+          type: string
+
+    ParkingSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        spotId:
+          type: integer
+          nullable: true
+        spotNumber:
+          type: string
+          nullable: true
+        plate:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, van]
+        vehicleColor:
+          type: string
+          nullable: true
+        vehicleBrand:
+          type: string
+          nullable: true
+        driverName:
+          type: string
+          nullable: true
+        entryTime:
+          type: string
+          format: date-time
+        exitTime:
+          type: string
+          format: date-time
+          nullable: true
+        durationMinutes:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card, debit_card, pix, transfer]
+          nullable: true
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        isSubscriber:
+          type: boolean
+        subscriberId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, plate, vehicleType, entryTime, status, isSubscriber, createdAt]
+
+    CreateSessionBody:
+      type: object
+      properties:
+        spotId:
+          type: integer
+          nullable: true
+        plate:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, van]
+        vehicleColor:
+          type: string
+        vehicleBrand:
+          type: string
+        driverName:
+          type: string
+        isSubscriber:
+          type: boolean
+        subscriberId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+      required: [plate, vehicleType]
+
+    UpdateSessionBody:
+      type: object
+      properties:
+        exitTime:
+          type: string
+          format: date-time
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card, debit_card, pix, transfer]
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        notes:
+          type: string
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+        durationDays:
+          type: integer
+        vehicleTypes:
+          type: array
+          items:
+            type: string
+        maxVehicles:
+          type: integer
+        isActive:
+          type: boolean
+        subscriberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, price, durationDays, vehicleTypes, maxVehicles, isActive, subscriberCount, createdAt]
+
+    CreatePlanBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        durationDays:
+          type: integer
+        vehicleTypes:
+          type: array
+          items:
+            type: string
+        maxVehicles:
+          type: integer
+        isActive:
+          type: boolean
+      required: [name, price, durationDays, vehicleTypes, maxVehicles]
+
+    UpdatePlanBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        durationDays:
+          type: integer
+        vehicleTypes:
+          type: array
+          items:
+            type: string
+        maxVehicles:
+          type: integer
+        isActive:
+          type: boolean
+
+    Subscriber:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        cpf:
+          type: string
+          nullable: true
+        planId:
+          type: integer
+        planName:
+          type: string
+        plate:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, van]
+        vehicleColor:
+          type: string
+          nullable: true
+        vehicleBrand:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [active, expired, cancelled, pending]
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card, debit_card, pix, transfer]
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, planId, planName, plate, vehicleType, startDate, endDate, status, amount, createdAt]
+
+    CreateSubscriberBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        cpf:
+          type: string
+        planId:
+          type: integer
+        plate:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, van]
+        vehicleColor:
+          type: string
+        vehicleBrand:
+          type: string
+        startDate:
+          type: string
+          format: date
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card, debit_card, pix, transfer]
+        notes:
+          type: string
+      required: [name, planId, plate, vehicleType, startDate]
+
+    UpdateSubscriberBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        cpf:
+          type: string
+        planId:
+          type: integer
+        plate:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, van]
+        vehicleColor:
+          type: string
+        vehicleBrand:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [active, expired, cancelled, pending]
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card, debit_card, pix, transfer]
+        notes:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [session, subscription, fine]
+        referenceId:
+          type: integer
+        description:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card, debit_card, pix, transfer]
+          nullable: true
+        plate:
+          type: string
+          nullable: true
+        customerName:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, referenceId, description, amount, date, createdAt]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalSpots:
+          type: integer
+        occupiedSpots:
+          type: integer
+        availableSpots:
+          type: integer
+        occupancyRate:
+          type: number
+        activeSessionsCount:
+          type: integer
+        activeSubscribersCount:
+          type: integer
+        todayRevenue:
+          type: number
+        monthRevenue:
+          type: number
+        todaySessions:
+          type: integer
+        monthSessions:
+          type: integer
+        expiringSubscribersCount:
+          type: integer
+      required: [totalSpots, occupiedSpots, availableSpots, occupancyRate, activeSessionsCount, activeSubscribersCount, todayRevenue, monthRevenue, todaySessions, monthSessions, expiringSubscribersCount]
+
+    OccupancyBreakdown:
+      type: object
+      properties:
+        type:
+          type: string
+        total:
+          type: integer
+        occupied:
+          type: integer
+        available:
+          type: integer
+        occupancyRate:
+          type: number
+      required: [type, total, occupied, available, occupancyRate]
+
+    RevenueTrendPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        revenue:
+          type: number
+        sessions:
+          type: integer
+        subscriptions:
+          type: number
+      required: [date, revenue, sessions, subscriptions]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [entry, exit, subscription]
+        plate:
+          type: string
+        vehicleType:
+          type: string
+        driverName:
+          type: string
+          nullable: true
+        spotNumber:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        time:
+          type: string
+          format: date-time
+        isSubscriber:
+          type: boolean
+      required: [id, type, plate, vehicleType, time, isSubscriber]
+
+    RevenueReport:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        sessionRevenue:
+          type: number
+        subscriptionRevenue:
+          type: number
+        totalTransactions:
+          type: integer
+        averageTicket:
+          type: number
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenueTrendPoint"
+        byPaymentMethod:
+          type: array
+          items:
+            type: object
+            properties:
+              method:
+                type: string
+              amount:
+                type: number
+              count:
+                type: integer
+            required: [method, amount, count]
+      required: [totalRevenue, sessionRevenue, subscriptionRevenue, totalTransactions, averageTicket, points, byPaymentMethod]
+
+    OccupancyReport:
+      type: object
+      properties:
+        averageOccupancyRate:
+          type: number
+        peakOccupancyRate:
+          type: number
+        totalSessions:
+          type: integer
+        averageDurationMinutes:
+          type: number
+        bySpotType:
+          type: array
+          items:
+            $ref: "#/components/schemas/OccupancyBreakdown"
+        byHour:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: integer
+              avgOccupancy:
+                type: number
+              sessionCount:
+                type: integer
+            required: [hour, avgOccupancy, sessionCount]
+      required: [averageOccupancyRate, peakOccupancyRate, totalSessions, averageDurationMinutes, bySpotType, byHour]
